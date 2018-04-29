@@ -15,22 +15,20 @@
  */
 package org.springframework.cloud.config.server.environment;
 
+import static org.springframework.cloud.config.client.ConfigClientProperties.STATE_HEADER;
+import static org.springframework.cloud.config.client.ConfigClientProperties.TOKEN_HEADER;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonRawValue;
-import com.fasterxml.jackson.databind.JsonNode;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.cloud.config.environment.Environment;
@@ -47,17 +45,15 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import static org.springframework.cloud.config.client.ConfigClientProperties.STATE_HEADER;
-import static org.springframework.cloud.config.client.ConfigClientProperties.TOKEN_HEADER;
-
 /**
  * @author Spencer Gibb
  * @author Mark Paluch
+ * @author Harry Martland
  */
 @Validated
 public class VaultEnvironmentRepository implements EnvironmentRepository, Ordered {
 
-	public static final String VAULT_TOKEN = "X-Vault-Token";
+	private static final String VAULT_TOKEN = "X-Vault-Token";
 
 	/** Vault host. Defaults to 127.0.0.1. */
 	@NotEmpty
@@ -82,6 +78,9 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 	@NotEmpty
 	private String profileSeparator;
 
+	/** Version of the api used by vault. */
+	private VaultEnvironmentProperties.Version version;
+
 	private int order;
 
 	private RestTemplate rest;
@@ -103,6 +102,7 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 		this.port = properties.getPort();
 		this.profileSeparator = properties.getProfileSeparator();
 		this.scheme = properties.getScheme();
+		this.version = properties.getVersion();
 	}
 
 	@Override
@@ -141,6 +141,14 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 		return environment;
 	}
 
+	private Class<? extends VaultDataProvider> getVaultResponseType() {
+		if (VaultEnvironmentProperties.Version.V2.equals(version)) {
+			return Vault2Response.class;
+		} else {
+			return VaultResponse.class;
+		}
+	}
+
 	private List<String> findKeys(String application, List<String> profiles) {
 		List<String> keys = new ArrayList<>();
 
@@ -172,7 +180,7 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 	}
 
 	String read(HttpServletRequest servletRequest, String key) {
-		String url = String.format("%s://%s:%s/v1/{backend}/{key}", this.scheme, this.host, this.port);
+		String url = createRequest();
 
 		HttpHeaders headers = new HttpHeaders();
 
@@ -182,8 +190,8 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 		}
 		headers.add(VAULT_TOKEN, token);
 		try {
-			ResponseEntity<VaultResponse> response = this.rest.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
-					VaultResponse.class, this.backend, key);
+			ResponseEntity<? extends VaultDataProvider> response = this.rest.exchange(url, HttpMethod.GET, new HttpEntity<>(headers),
+					getVaultResponseType(), this.backend, key);
 
 			HttpStatus status = response.getStatusCode();
 			if (status == HttpStatus.OK) {
@@ -199,6 +207,13 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 		return null;
 	}
 
+	private String createRequest() {
+		if (VaultEnvironmentProperties.Version.V2.equals(version)) {
+			return String.format("%s://%s:%s/v1/{backend}/data/{key}", this.scheme, this.host, this.port);
+		} else {
+			return String.format("%s://%s:%s/v1/{backend}/{key}", this.scheme, this.host, this.port);
+		}
+	}
 	public void setHost(String host) {
 		this.host = host;
 	}
@@ -232,32 +247,16 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 		return order;
 	}
 
-	@JsonIgnoreProperties(ignoreUnknown = true)
-	static class VaultResponse {
+	interface VaultDataProvider {
+		String getData();
+	}
 
-		private String auth;
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	static class VaultResponse implements VaultDataProvider {
 
 		private Object data;
 
-		@JsonProperty("lease_duration")
-		private long leaseDuration;
-
-		@JsonProperty("lease_id")
-		private String leaseId;
-
-		private boolean renewable;
-
-		public VaultResponse() {
-		}
-
-		public String getAuth() {
-			return auth;
-		}
-
-		public void setAuth(String auth) {
-			this.auth = auth;
-		}
-
+		@Override
 		@JsonRawValue
 		public String getData() {
 			return data == null ? null : data.toString();
@@ -267,28 +266,35 @@ public class VaultEnvironmentRepository implements EnvironmentRepository, Ordere
 			this.data = data;
 		}
 
-		public long getLeaseDuration() {
-			return leaseDuration;
+	}
+
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	static class Vault2Response implements VaultDataProvider {
+
+		private Vault2ResponseData data;
+
+		@Override
+		@JsonRawValue
+		public String getData() {
+			return data == null ? null : data.getData();
 		}
 
-		public void setLeaseDuration(long leaseDuration) {
-			this.leaseDuration = leaseDuration;
+	}
+
+	@JsonIgnoreProperties(ignoreUnknown = true)
+	static class Vault2ResponseData implements VaultDataProvider {
+
+		private Object data;
+
+		@Override
+		@JsonRawValue
+		public String getData() {
+			return data == null ? null : data.toString();
 		}
 
-		public String getLeaseId() {
-			return leaseId;
+		public void setData(JsonNode data) {
+			this.data = data;
 		}
 
-		public void setLeaseId(String leaseId) {
-			this.leaseId = leaseId;
-		}
-
-		public boolean isRenewable() {
-			return renewable;
-		}
-
-		public void setRenewable(boolean renewable) {
-			this.renewable = renewable;
-		}
 	}
 }

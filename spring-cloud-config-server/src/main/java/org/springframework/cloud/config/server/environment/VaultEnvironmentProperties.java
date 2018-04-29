@@ -21,6 +21,7 @@ import org.springframework.core.Ordered;
 
 /**
  * @author Dylan Roberts
+ * @author Harry Martland
  */
 @ConfigurationProperties("spring.cloud.config.server.vault")
 public class VaultEnvironmentProperties implements EnvironmentRepositoryProperties {
@@ -37,6 +38,8 @@ public class VaultEnvironmentProperties implements EnvironmentRepositoryProperti
     /** Vault profile separator. Defaults to comma. */
     private String profileSeparator = ",";
     private int order = Ordered.LOWEST_PRECEDENCE;
+    /** Version of the api used by vault */
+    private Version version;
 
     public String getHost() {
         return host;
@@ -90,8 +93,20 @@ public class VaultEnvironmentProperties implements EnvironmentRepositoryProperti
         return order;
     }
 
+    public Version getVersion() {
+        return version;
+    }
+
+    public void setVersion(Version version) {
+        this.version = version;
+    }
+
     @Override
     public void setOrder(int order) {
         this.order = order;
+    }
+
+    public enum Version{
+        V1,V2
     }
 }

@@ -1,15 +1,18 @@
 package org.springframework.cloud.config.server.environment;
 
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import java.util.HashMap;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
-
 import org.junit.Before;
 import org.junit.Test;
-
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.config.environment.Environment;
+import org.springframework.cloud.config.server.environment.VaultEnvironmentRepository.Vault2Response;
 import org.springframework.cloud.config.server.environment.VaultEnvironmentRepository.VaultResponse;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -18,20 +21,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.client.RestTemplate;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 /**
  * @author Spencer Gibb
  * @author Ryan Baxter
+ * @author Harry Martland
  */
 public class VaultEnvironmentRepositoryTests {
 
 	@Before
-	public void init() {}
+	public void init() { }
 
 	@SuppressWarnings("unchecked")
 	private ObjectProvider<HttpServletRequest> mockProvide(HttpServletRequest request) {
@@ -198,5 +196,47 @@ public class VaultEnvironmentRepositoryTests {
 		VaultEnvironmentRepository repo = new VaultEnvironmentRepository(objectProvider,
 				new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
 		repo.findOne("myapp", null, null);
+	}
+
+	@Test
+	public void testFindOneDefaultKeySetAndEqualToApplicationV2() {
+		MockHttpServletRequest configRequest = new MockHttpServletRequest();
+		configRequest.addHeader("X-CONFIG-TOKEN", "mytoken");
+		RestTemplate rest = mock(RestTemplate.class);
+
+		ResponseEntity<Vault2Response> myAppResp = mock(ResponseEntity.class);
+		when(myAppResp.getStatusCode()).thenReturn(HttpStatus.OK);
+		Vault2Response myAppVaultResp = mock(Vault2Response.class);
+		when(myAppVaultResp.getData()).thenReturn("{\"foo\":\"bar\"}");
+		when(myAppResp.getBody()).thenReturn(myAppVaultResp);
+		when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+				eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
+				eq("secret"), eq("myapp"))).thenReturn(myAppResp);
+
+		ResponseEntity<Vault2Response> appResp = mock(ResponseEntity.class);
+		when(appResp.getStatusCode()).thenReturn(HttpStatus.OK);
+		Vault2Response appVaultResp = mock(Vault2Response.class);
+		when(appVaultResp.getData()).thenReturn("{\"def-foo\":\"def-bar\"}");
+		when(appResp.getBody()).thenReturn(appVaultResp);
+		when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+				eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
+				eq("secret"), eq("application"))).thenReturn(appResp);
+
+		VaultEnvironmentProperties properties = new VaultEnvironmentProperties();
+		properties.setVersion(VaultEnvironmentProperties.Version.V2);
+		VaultEnvironmentRepository repo = new VaultEnvironmentRepository(mockProvide(configRequest),
+				new EnvironmentWatch.Default(), rest, properties);
+		repo.setDefaultKey("myapp");
+
+		Environment e = repo.findOne("myapp", null, null);
+		assertEquals("Name should be the same as the application argument",
+				"myapp", e.getName());
+		assertEquals("Only properties for specified application should be returned",
+				1, e.getPropertySources().size());
+
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("foo", "bar");
+		assertEquals("Properties should be returned for specified application",
+				result, e.getPropertySources().get(0).getSource());
 	}
 }
