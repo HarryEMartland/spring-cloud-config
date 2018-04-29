@@ -21,26 +21,24 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Spencer Gibb
- * @author Mark Paluch
  * @author Harry Martland
  */
 @Validated
-public class VaultEnvironmentRepository extends AbstractVaultEnvironmentRepository<VaultResponse> {
+public class Vault2EnvironmentRepository extends AbstractVaultEnvironmentRepository<Vault2Response> {
 
-    public VaultEnvironmentRepository(ObjectProvider<HttpServletRequest> request, EnvironmentWatch watch, RestTemplate rest,
-                                      VaultEnvironmentProperties properties) {
+    public Vault2EnvironmentRepository(ObjectProvider<HttpServletRequest> request, EnvironmentWatch watch, RestTemplate rest,
+                                       AbstractVaultEnvironmentProperties properties) {
         super(request, watch, rest, properties);
     }
 
     @Override
     protected String createVaultUrl() {
-        return String.format("%s://%s:%s/v1/{backend}/{key}", this.scheme, this.host, this.port);
+        return String.format("%s://%s:%s/v1/{backend}/data/{key}", this.scheme, this.host, this.port);
     }
 
     @Override
-    protected Class<VaultResponse> getVaultDataAccessClass() {
-        return VaultResponse.class;
+    protected Class<Vault2Response> getVaultDataAccessClass() {
+        return Vault2Response.class;
     }
 
 }

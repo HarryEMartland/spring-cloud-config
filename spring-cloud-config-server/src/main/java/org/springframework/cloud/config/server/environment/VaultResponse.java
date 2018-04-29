@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2013-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.cloud.config.server.environment;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * @author Dylan Roberts
+ * @author Spencer Gibb
+ * @author Mark Paluch
+ * @author Harry Martland
  */
-@ConfigurationProperties("spring.cloud.config.server.vault")
-public class VaultEnvironmentProperties extends AbstractVaultEnvironmentProperties {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class VaultResponse implements AbstractVaultEnvironmentRepository.VaultDataAccess {
+
+    private Object data;
+
+    @JsonRawValue
+    public String getData() {
+        return data == null ? null : data.toString();
+    }
+
+    public void setData(JsonNode data) {
+        this.data = data;
+    }
 
 }

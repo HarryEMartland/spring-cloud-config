@@ -22,8 +22,9 @@ import org.springframework.web.client.RestTemplate;
 /**
  * @author Spencer Gibb
  * @author Ryan Baxter
+ * @author Harry Martland
  */
-public class VaultEnvironmentRepositoryTests {
+public class Vault2EnvironmentRepositoryTests {
 
     @Before
     public void init() {
@@ -44,25 +45,25 @@ public class VaultEnvironmentRepositoryTests {
 
         RestTemplate rest = mock(RestTemplate.class);
 
-        ResponseEntity<VaultResponse> myAppResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> myAppResp = mock(ResponseEntity.class);
         when(myAppResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse myAppVaultResp = mock(VaultResponse.class);
+        Vault2Response myAppVaultResp = mock(Vault2Response.class);
         when(myAppVaultResp.getData()).thenReturn("{\"foo\":\"bar\"}");
         when(myAppResp.getBody()).thenReturn(myAppVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("myapp"))).thenReturn(myAppResp);
 
-        ResponseEntity<VaultResponse> appResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> appResp = mock(ResponseEntity.class);
         when(appResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse appVaultResp = mock(VaultResponse.class);
+        Vault2Response appVaultResp = mock(Vault2Response.class);
         when(appVaultResp.getData()).thenReturn("{\"def-foo\":\"def-bar\"}");
         when(appResp.getBody()).thenReturn(appVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("application"))).thenReturn(appResp);
 
-        VaultEnvironmentRepository repo = new VaultEnvironmentRepository(mockProvide(configRequest),
+        Vault2EnvironmentRepository repo = new Vault2EnvironmentRepository(mockProvide(configRequest),
                 new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
 
         Environment e = repo.findOne("myapp", null, null);
@@ -87,25 +88,25 @@ public class VaultEnvironmentRepositoryTests {
         configRequest.addHeader("X-CONFIG-TOKEN", "mytoken");
         RestTemplate rest = mock(RestTemplate.class);
 
-        ResponseEntity<VaultResponse> myAppResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> myAppResp = mock(ResponseEntity.class);
         when(myAppResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse myAppVaultResp = mock(VaultResponse.class);
+        Vault2Response myAppVaultResp = mock(Vault2Response.class);
         when(myAppVaultResp.getData()).thenReturn("{\"foo\":\"bar\"}");
         when(myAppResp.getBody()).thenReturn(myAppVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("myapp"))).thenReturn(myAppResp);
 
-        ResponseEntity<VaultResponse> myDefaultKeyResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> myDefaultKeyResp = mock(ResponseEntity.class);
         when(myDefaultKeyResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse myDefaultKeyVaultResp = mock(VaultResponse.class);
+        Vault2Response myDefaultKeyVaultResp = mock(Vault2Response.class);
         when(myDefaultKeyVaultResp.getData()).thenReturn("{\"def-foo\":\"def-bar\"}");
         when(myDefaultKeyResp.getBody()).thenReturn(myDefaultKeyVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("mydefaultkey"))).thenReturn(myDefaultKeyResp);
 
-        VaultEnvironmentRepository repo = new VaultEnvironmentRepository(mockProvide(configRequest),
+        Vault2EnvironmentRepository repo = new Vault2EnvironmentRepository(mockProvide(configRequest),
                 new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
         repo.setDefaultKey("mydefaultkey");
 
@@ -132,25 +133,25 @@ public class VaultEnvironmentRepositoryTests {
         configRequest.addHeader("X-CONFIG-TOKEN", "mytoken");
         RestTemplate rest = mock(RestTemplate.class);
 
-        ResponseEntity<VaultResponse> myAppResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> myAppResp = mock(ResponseEntity.class);
         when(myAppResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse myAppVaultResp = mock(VaultResponse.class);
+        Vault2Response myAppVaultResp = mock(Vault2Response.class);
         when(myAppVaultResp.getData()).thenReturn("{\"foo\":\"bar\"}");
         when(myAppResp.getBody()).thenReturn(myAppVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("myapp"))).thenReturn(myAppResp);
 
-        ResponseEntity<VaultResponse> appResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> appResp = mock(ResponseEntity.class);
         when(appResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse appVaultResp = mock(VaultResponse.class);
+        Vault2Response appVaultResp = mock(Vault2Response.class);
         when(appVaultResp.getData()).thenReturn("{\"def-foo\":\"def-bar\"}");
         when(appResp.getBody()).thenReturn(appVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("application"))).thenReturn(appResp);
 
-        VaultEnvironmentRepository repo = new VaultEnvironmentRepository(mockProvide(configRequest),
+        Vault2EnvironmentRepository repo = new Vault2EnvironmentRepository(mockProvide(configRequest),
                 new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
         repo.setDefaultKey("myapp");
 
@@ -171,15 +172,15 @@ public class VaultEnvironmentRepositoryTests {
     public void missingConfigToken() {
         MockHttpServletRequest configRequest = new MockHttpServletRequest();
         RestTemplate rest = mock(RestTemplate.class);
-        ResponseEntity<VaultResponse> myAppResp = mock(ResponseEntity.class);
+        ResponseEntity<Vault2Response> myAppResp = mock(ResponseEntity.class);
         when(myAppResp.getStatusCode()).thenReturn(HttpStatus.OK);
-        VaultResponse myAppVaultResp = mock(VaultResponse.class);
+        Vault2Response myAppVaultResp = mock(Vault2Response.class);
         when(myAppVaultResp.getData()).thenReturn("{\"foo\":\"bar\"}");
         when(myAppResp.getBody()).thenReturn(myAppVaultResp);
-        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/{key}"),
-                eq(HttpMethod.GET), any(HttpEntity.class), eq(VaultResponse.class),
+        when(rest.exchange(eq("http://127.0.0.1:8200/v1/{backend}/data/{key}"),
+                eq(HttpMethod.GET), any(HttpEntity.class), eq(Vault2Response.class),
                 eq("secret"), eq("myapp"))).thenReturn(myAppResp);
-        VaultEnvironmentRepository repo = new VaultEnvironmentRepository(mockProvide(configRequest),
+        Vault2EnvironmentRepository repo = new Vault2EnvironmentRepository(mockProvide(configRequest),
                 new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
         repo.findOne("myapp", null, null);
     }
@@ -191,7 +192,7 @@ public class VaultEnvironmentRepositoryTests {
         when(objectProvider.getIfAvailable()).thenReturn(null);
 
         RestTemplate rest = mock(RestTemplate.class);
-        VaultEnvironmentRepository repo = new VaultEnvironmentRepository(objectProvider,
+        Vault2EnvironmentRepository repo = new Vault2EnvironmentRepository(objectProvider,
                 new EnvironmentWatch.Default(), rest, new VaultEnvironmentProperties());
         repo.findOne("myapp", null, null);
     }

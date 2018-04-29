@@ -18,9 +18,9 @@ package org.springframework.cloud.config.server.environment;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * @author Dylan Roberts
+ * @author Harry martland
  */
-@ConfigurationProperties("spring.cloud.config.server.vault")
-public class VaultEnvironmentProperties extends AbstractVaultEnvironmentProperties {
+@ConfigurationProperties("spring.cloud.config.server.vault2")
+public class Vault2EnvironmentProperties extends AbstractVaultEnvironmentProperties {
 
 }

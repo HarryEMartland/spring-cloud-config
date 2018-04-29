@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2018 the original author or authors.
+ * Copyright 2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,30 +17,25 @@ package org.springframework.cloud.config.server.environment;
 
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * @author Spencer Gibb
- * @author Mark Paluch
  * @author Harry Martland
  */
-@Validated
-public class VaultEnvironmentRepository extends AbstractVaultEnvironmentRepository<VaultResponse> {
+public class Vault2EnvironmentRepositoryFactory implements EnvironmentRepositoryFactory<Vault2EnvironmentRepository,
+        Vault2EnvironmentProperties> {
+    private ObjectProvider<HttpServletRequest> request;
+    private EnvironmentWatch watch;
 
-    public VaultEnvironmentRepository(ObjectProvider<HttpServletRequest> request, EnvironmentWatch watch, RestTemplate rest,
-                                      VaultEnvironmentProperties properties) {
-        super(request, watch, rest, properties);
+    public Vault2EnvironmentRepositoryFactory(ObjectProvider<HttpServletRequest> request, EnvironmentWatch watch) {
+        this.request = request;
+        this.watch = watch;
     }
 
     @Override
-    protected String createVaultUrl() {
-        return String.format("%s://%s:%s/v1/{backend}/{key}", this.scheme, this.host, this.port);
+    public Vault2EnvironmentRepository build(Vault2EnvironmentProperties environmentProperties) {
+        Vault2EnvironmentRepository repository = new Vault2EnvironmentRepository(request, watch, new RestTemplate(),
+                environmentProperties);
+        return repository;
     }
-
-    @Override
-    protected Class<VaultResponse> getVaultDataAccessClass() {
-        return VaultResponse.class;
-    }
-
 }
